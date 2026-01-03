@@ -226,7 +226,7 @@ resize();
 let current = 'clear';
 let windStrength = 0;
 let backParticles = [];
-let frontParticles = [];
+let frontParticles = [];  // Now only used for splashes that appear above objects
 let lightning = [];
 let fogParticles = [];
 let tornado = null;
@@ -268,22 +268,19 @@ function setWeather(mode) {
     let count = mode === 'clouds_minimal_rain' ? 200 : 600;
     if (mode.includes('rain') || mode === 'clouds_minimal_rain') {
         for (let i = 0; i < count; i++) {
-            const p = createRainDrop(true);
-            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+            backParticles.push(createRainDrop(true));
         }
     }
 
     if (mode.includes('snow')) {
         for (let i = 0; i < 500; i++) {
-            const p = createSnowflake(true);
-            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+            backParticles.push(createSnowflake(true));
         }
     }
 
     if (mode.includes('hail')) {
         for (let i = 0; i < 150; i++) {
-            const p = createHail(true);
-            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+            backParticles.push(createHail(true));
         }
     }
 
@@ -357,9 +354,8 @@ function createHail(initial = false) {
 
 function createSplash(x, y, count = 5, intensity = 1, type = 'rain') {
     const color = type === 'rain' ? [150,180,255] : [255,255,255];
-    const target = y < innerHeight * 0.6 ? frontParticles : backParticles;
     for (let i = 0; i < count; i++) {
-        target.push({
+        frontParticles.push({
             x, y,
             vx: (Math.random() - 0.5) * 8 * intensity,
             vy: -(4 + Math.random() * 6) * intensity,
@@ -579,7 +575,7 @@ function updateParticles(particles) {
 
 function animate() {
     ctxBack.clearRect(0, 0, canvasBack.width, canvasBack.height);
-    ctxFront.clearRect(0, 0, canvasFront.width, canvasFront.width);
+    ctxFront.clearRect(0, 0, canvasFront.width, canvasFront.height);
 
     const now = new Date();
     hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
@@ -606,20 +602,17 @@ function animate() {
 
     if (current.includes('rain') || current === 'clouds_minimal_rain') {
         for (let i = 0; i < 2; i++) {
-            const p = createRainDrop();
-            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+            backParticles.push(createRainDrop());
         }
     }
     if (current.includes('snow')) {
         for (let i = 0; i < 2; i++) {
-            const p = createSnowflake();
-            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+            backParticles.push(createSnowflake());
         }
     }
     if (current.includes('hail')) {
         for (let i = 0; i < 1; i++) {
-            const p = createHail();
-            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+            backParticles.push(createHail());
         }
     }
 
