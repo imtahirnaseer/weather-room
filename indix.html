@@ -240,6 +240,7 @@ const SUNRISE_HOUR = 7.683;
 const SUNSET_HOUR = 17.533;
 let hour = 0;
 
+// Fixed HTTPS URLs
 const fog3 = new Image(); fog3.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEivlhY6hYpzJ1UtYunIK06NsS7Qwo4rE9HxngFLc1KLDLl7BFXaZUcEaoSetSIO_WoB7rAHsYHS8xgrSw4STmxzR00CGhxiYLBTEwWve8mBVNlaGPda7BQFD0dCeHGBGrQJ-wfnuBmprxxna_TFTzrY8gdSk130BVFr8tjbmhNZWNWzQrQ3g2IuBh0hoh4z/s360/fog3.png";
 const fog2 = new Image(); fog2.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnXyFg-cVUzYySAH8f8dXCGZa2IEmC3HWuuAj-B4amIBTAvGc4cuD6mTBu4w3ea5uJ0shoFQzoMCeLbJA8VIdZNUg6ZIEa7KOcYFPS9NJZ2NvwYniwXy5qZLCZRZvxgIIfFmz4zBpM7T-SMCsWU0BRMPpyN3zsYJyBb7i1-o0DyvmgBmhGxZLXfFJu2LwG/s640/fog2.png";
 const fog1 = new Image(); fog1.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7nj5WO-gwOY_uwAYPS1ftEv9P83nXTyo8s0nEn3LEWscMxOyQgwXFr2sz4_bBNJBx3rSrtLJmK_To0BUPKhyOaAkbIgiRnhl6yAZUGQuGKvwWI8bJRTfLtUwxE7odZqZ6pf2T1kz0SpO5Im8pZMceAzvOuikSYowHhZ_KQPWCZDe6Gh7DNjcyCl8KX0X8/s1050/fog1.png";
@@ -408,7 +409,6 @@ function triggerEarthquakeShake() {
         shake();
     });
 
-    // Random chance one object falls
     if (Math.random() < 0.12) {
         const randomObj = objs[Math.floor(Math.random() * objs.length)];
         randomObj.style.transition = 'transform 2.5s ease-in, opacity 2.5s';
@@ -557,7 +557,7 @@ function updateParticles(particles) {
                     collidedWithObject = true;
                     const hitYPos = rect.top;
                     createSplash(p.x, hitYPos, p.type === 'hail' ? 5 : 5, 1, p.type);
-                    keep = false; // Rain/snow/hail disappear on object hit (no layering on objects)
+                    keep = false;
                     break;
                 }
             }
@@ -579,7 +579,7 @@ function updateParticles(particles) {
 
 function animate() {
     ctxBack.clearRect(0, 0, canvasBack.width, canvasBack.height);
-    ctxFront.clearRect(0, 0, canvasFront.width, canvasFront.height);
+    ctxFront.clearRect(0, 0, canvasFront.width, canvasFront.width);
 
     const now = new Date();
     hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
