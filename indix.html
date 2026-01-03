@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Interactive Realistic Weather Scene</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; overflow:hidden; font-family:Arial, sans-serif; }
+        
+        body {
+            background:
+                radial-gradient(ellipse at center bottom, rgba(90,150,90,.35) 0%, rgba(90,150,90,.18) 32%, rgba(90,150,90,.10) 48%, rgba(90,150,90,.04) 62%, rgba(255,255,255,0) 78%),
+                linear-gradient(#9fd3ff 0%, #eaf9ff 58%),
+                url("https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6bLyQ5jY9tJzjIJ8l-FRFlYgSp0X9HSqpJbfuL5LjZj2v3t3RRvVFoB-JW0B5wlsgFpXtZkMGJC_EvVATaQPrsMe8bs3-cXFqw02Dd6gjX_kcl85duAj-RwhtQGvHuSnUiPtpjR_l8aWpgCD9U6McESwxUfbBPS-aGKZmHB3UTqV27WM2pUh-kEe3itwr/s783/grass-base.png");
+            background-repeat: no-repeat, no-repeat, repeat;
+            background-size: 140% 55%, 100% 100%, 140px auto;
+            background-position: center bottom, top left, center bottom;
+        }
+        
+        .grass {
+            position: absolute;
+            bottom: -107px;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: url("https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6bLyQ5jY9tJzjIJ8l-FRFlYgSp0X9HSqpJbfuL5LjZj2v3t3RRvVFoB-JW0B5wlsgFpXtZkMGJC_EvVATaQPrsMe8bs3-cXFqw02Dd6gjX_kcl85duAj-RwhtQGvHuSnUiPtpjR_l8aWpgCD9U6McESwxUfbBPS-aGKZmHB3UTqV27WM2pUh-kEe3itwr/s783/grass-base.png");
+            background-repeat: repeat-x;
+            background-size: 120px auto;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .scene {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 8px);
+            top: 200px;
+            z-index: 1;
+        }
+        
+        .obj {
+            position: absolute;
+            bottom: 17%;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            transition: transform 0.3s ease-out, filter 0.3s ease-out;
+        }
+        .obj img { display: block; }
+        
+        .obj::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -25px;
+            width: 150%;
+            height: 50px;
+            transform: translateX(-50%);
+            background: url("https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh6bLyQ5jY9tJzjIJ8l-FRFlYgSp0X9HSqpJbfuL5LjZj2v3t3RRvVFoB-JW0B5wlsgFpXtZkMGJC_EvVATaQPrsMe8bs3-cXFqw02Dd6gjX_kcl85duAj-RwhtQGvHuSnUiPtpjR_l8aWpgCD9U6McESwxUfbBPS-aGKZmHB3UTqV27WM2pUh-kEe3itwr/s783/grass-base.png");
+            background-repeat: repeat;
+            background-size: 120px auto;
+            opacity: .75;
+            filter: blur(1px);
+            z-index: -1;
+        }
+
+        .snow-cap {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: rgba(255,255,255,0.8);
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 2;
+            transition: height 0.5s ease;
+        }
+
+        .bike { bottom: calc(18% - 20px); }
+        .car { bottom: calc(18% - 20px); }
+
+        .building img { width: 190px; }
+        .hostel img { width: 280px; }
+        .tree img { width: 150px; }
+        .bike img { width: 120px; }
+        .car img { width: 160px; }
+        
+        .d1 { transform: translateX(-50%) scale(.9); }
+        .d2 { transform: translateX(-50%) scale(1); }
+        .d3 { transform: translateX(-50%) scale(1.1); }
+        
+        #ui {
+            position: fixed;
+            left: 12px;
+            top: 10px;
+            z-index: 9999;
+            background: rgba(10,12,16,0.75);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        #ui button {
+            margin: 5px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        #ui button:hover { background: rgba(255,255,255,0.2); }
+        #ui button.active {
+            background: #7fc4ff;
+            color: black;
+            box-shadow: 0 0 12px rgba(127,196,255,0.5);
+        }
+        #ui .label {
+            font-size: 15px;
+            margin-right: 8px;
+            color: #ccc;
+        }
+        
+        #menu-btn {
+            display: none;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            z-index: 10000;
+            background: rgba(10,12,16,0.75);
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+        
+        canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+        #weatherBack { z-index: 0; }
+        #weatherFront { z-index: 5; }
+
+        @media (max-width: 768px) {
+            .scene { top: 100px; }
+            .obj { bottom: 10%; }
+            .building img { width: 120px; }
+            .hostel img { width: 180px; }
+            .tree img { width: 100px; }
+            .bike img { width: 80px; }
+            .car img { width: 120px; }
+            body { background-size: 200% 80%, 100% 100%, 100px auto; }
+            .grass { background-size: 80px auto; height: 120px; bottom: -90px; }
+            #menu-btn { display: block; }
+            #ui {
+                position: fixed; left: 0; top: 0; height: 100%; width: 250px;
+                transform: translateX(-100%); transition: transform 0.3s ease;
+                border-radius: 0; overflow-y: auto;
+            }
+            #ui.open { transform: translateX(0); }
+            #buttons { flex-direction: column; max-width: none; }
+            .label { display: block; margin-bottom: 10px; }
+            .bike { bottom: calc(10% - 10px); }
+            .car { bottom: calc(10% - 10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="grass"></div>
+    
+    <div class="scene">
+        <div class="obj bike d1" style="left:5%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgD63DZlYsdIj4A8mzPNs6z9YeYB5pqCm5SV3Z9FNer2PcCes0gLJATpLcy1wFgJ-kFsVbywsjNCWee7VSKKbXLXBrVuGqp5gCQGPlcoQ3qTczXFK0xq8kKnYcoHq9G6ag1SOXdXUVLsfKXsbN4JOQ68jKJtneR2G1ASvvBneg66ftlGyuLcdIv2_eHaSsx/s282/bike.png"><div class="snow-cap"></div></div>
+        <div class="obj building d2" style="left:12%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiSJSNEkMOarc6oolYE2GRhM1EOYkdOaVRe-hfUOmKEAiyt4zEevuCeWO-UENGuBsE3hFm3EpxbSHbkKCQ73u6I46eNeTkSdds8wAbQMYWI4U_37bLFuFo-mXWPf-WL0rreJgkwMsQQm7oiPRYjRRfqBVJiZVxuAkBqKtJR4-_5SpB55a4NzokKUtjq2HtN/s249/Building.png"><div class="snow-cap"></div></div>
+        <div class="obj car d2" style="left:60%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjMGmGd1tQJdO6FEYhXtvcAbRyPy8LOCLsyTld8hdANzcPPq25-kRdjLY0nBZPQ2ohSjgiJxvYWYoCDXJlmCsl5285AHl3cAToSQHmg4X35001FbUe7QfsJuzpmOm_jkVbwIPtYn_Y_ss3Mc_9oidYUa9rW96zWvbMV3nKgauivalYmozbS5x6sC7TnU91S/s239/car.png"><div class="snow-cap"></div></div>
+        <div class="obj building d1" style="left:26%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi1YYnUg4EV_Hu8Id4dXxqvp1JrdnJ5p0f0jsdsELBwXrGq0oDRd0mc2IUb02ipO9IgaJDOcbNXObM-Wp1xIOzTW9WZeyq8cTWJlBD1chZ1lkF_TN-3NN2KwLBSJkymrF4PdB2OqGwUo4UMBc6q9Zt0irfRF0x3SoZnVoK5OOiOPXr9Odpve3uWeVv7w3At/s659/constructionBuilding.png"><div class="snow-cap"></div></div>
+        <div class="obj tree d2" style="left:35%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEikHGl3Pvh3Df1vRFdQejeT-7zy5DB9Mnckz43iRjSOJ-OzuM2MaV81_eIN-LyGP032d_RsaRYlGddqeBku7gRmBeFVRhfDP4rg_k6P4sgwi0qrwvQjpZ9BpCX8hF7Sud6b8dTqRsI3iboaYkeDBPjSa61hdwGkCgAj5uQ0HL_M--bIPNd7oHE9HE32kq4C/s500/orange-tree.png"><div class="snow-cap"></div></div>
+        <div class="obj hostel d3" style="left:46%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigMu4NHKw6G-EF7Grbm3ebPrPpdmARabdlhn1UCJXUPk9a7_ys3iZpSJo-Eg_KEQnZ1ZsXX8-Ji4MxKt4i0bLzGFzn4lCmdhk8meUlULC_dDICKuhWY5zqA4P-P277sVAxZqBC2NEEwuY0d5VmMsJ1cECD4d7oo6KfmLwWgTcUUT53gL29CHcWzyc2jsf5/s377/multi-stories-hostel.png"><div class="snow-cap"></div></div>
+        <div class="obj tree d1" style="left:55%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgd5j0R2Lk2BLIDk1T_mFGeK7bmWsUhCmn83x4_6aM2uA82ZuZzSI-hVuja3ZRBk7G3vk18zrvNlmiPQoag3rufDERAgU04ByR2y81CtIUEbmkOp5_MleHKlJZW1xl4dkVGuJ3F5wTAJyuW77lZlEKpubiwJmnjW_LjzUtT-hTYH4L2t4Euuc5r_-7NAcwS/s1200/green-tree-maxleafs.png"><div class="snow-cap"></div></div>
+        <div class="obj tree d2" style="left:66%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgP_Hu5NVUUSHGTARSs1EjogI9GyLuXCmzkEf8TOWCMrT3nsF5v1MOtC_vwlBIiC6M0hc7TFOnBObOCtkfWYaaCDraMpbnxMDiQbwEI1NJdmby6OPkKQg59wDR650gmlVtrFXrmzeS2vAxBsyKmiiqDasya4wGU91mHkcKvbjTOnAfNcxqo9tPu4U9fzyKR/s809/green-tree-neem.png"><div class="snow-cap"></div></div>
+        <div class="obj car d3" style="left:88%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgR4pJ6l0yw4j2BiRLRRRn0DeydvGOb5Wk5bnUCde51aIOX7S4cSgSvyX7bk3h5UDlyyhsx3pLIgKwhfhA3H2cZVuBhNmb11ZAAiEqwAAuU8GGBZcMkEwyneHylMmN5ExGqSgHCPcsn365SGSwURWef9umx3Nw4a1WCcOAbUjfbsSVXb3HQNFMt7gDQYl_f/s474/car1.png"><div class="snow-cap"></div></div>
+        <div class="obj tree d1" style="left:80%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh_Dsh7STYTADALpwkRTWgOMTzUmt_cnfA4EXlM3scDptxJkA65mN7nqBkkpOIdXR3npvNk5e3zo9kORLAbHb07dDKTvOpKDIB-_Pn1QD8gGCovwehLvXrXgpQiAO4YFVeWxg_d4C-sGwE82CYoxYDEG_hAlDYVzP5B2BRI6pT0diCxDSydIPBKT2JeJymF/s612/coconut-tree.png"><div class="snow-cap"></div></div>
+        <div class="obj tree d3" style="left:92%"><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUis0UnJro7TetRqZjouRgPHYgF-MQJtaTKIHL3Ld5V-VjvOT-A2SkjzJnoJ5-rqGITF731VcL3cr3Iej2Sbmro5mQSusN-m2h8Y-lruV611Legq9Z1xIzlHY0r9-wAN7NmwF6odqzTH-tp5okxXedZPMeQMS0RKNLQlrlCIAJO4z233UUWcVN5PeTg6f2/s360/mango-tree.png"><div class="snow-cap"></div></div>
+    </div>
+    
+    <div id="ui">
+        <span class="label">Weather:</span>
+        <div id="buttons" style="display:flex; flex-wrap:wrap; max-width:460px;"></div>
+    </div>
+    
+    <div id="menu-btn">☰</div>
+    
+    <canvas id="weatherBack"></canvas>
+    <canvas id="weatherFront"></canvas>
+
+<script>
+const canvasBack = document.getElementById('weatherBack');
+const ctxBack = canvasBack.getContext('2d');
+const canvasFront = document.getElementById('weatherFront');
+const ctxFront = canvasFront.getContext('2d');
+const buttonsEl = document.getElementById('buttons');
+const ui = document.getElementById('ui');
+const menuBtn = document.getElementById('menu-btn');
+
+menuBtn.addEventListener('click', () => ui.classList.toggle('open'));
+document.addEventListener('click', (e) => {
+    if (ui.classList.contains('open') && !ui.contains(e.target) && e.target !== menuBtn) {
+        ui.classList.remove('open');
+    }
+});
+
+function resize() {
+    canvasBack.width = innerWidth;
+    canvasBack.height = innerHeight;
+    canvasFront.width = innerWidth;
+    canvasFront.height = innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let current = 'clear';
+let windStrength = 0;
+let backParticles = [];
+let frontParticles = [];
+let lightning = [];
+let fogParticles = [];
+let tornado = null;
+let snowHeight = 0;
+let snowTimer = 0;
+let meltMode = false;
+let lightningFlash = 0;
+let earthquakeInterval = null;
+
+const SUNRISE_HOUR = 7.683;
+const SUNSET_HOUR = 17.533;
+let hour = 0;
+
+const fog3 = new Image(); fog3.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEivlhY6hYpzJ1UtYunIK06NsS7Qwo4rE9HxngFLc1KLDLl7BFXaZUcEaoSetSIO_WoB7rAHsYHS8xgrSw4STmxzR00CGhxiYLBTEwWve8mBVNlaGPda7BQFD0dCeHGBGrQJ-wfnuBmprxxna_TFTzrY8gdSk130BVFr8tjbmhNZWNWzQrQ3g2IuBh0hoh4z/s360/fog3.png";
+const fog2 = new Image(); fog2.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhnXyFg-cVUzYySAH8f8dXCGZa2IEmC3HWuuAj-B4amIBTAvGc4cuD6mTBu4w3ea5uJ0shoFQzoMCeLbJA8VIdZNUg6ZIEa7KOcYFPS9NJZ2NvwYniwXy5qZLCZRZvxgIIfFmz4zBpM7T-SMCsWU0BRMPpyN3zsYJyBb7i1-o0DyvmgBmhGxZLXfFJu2LwG/s640/fog2.png";
+const fog1 = new Image(); fog1.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7nj5WO-gwOY_uwAYPS1ftEv9P83nXTyo8s0nEn3LEWscMxOyQgwXFr2sz4_bBNJBx3rSrtLJmK_To0BUPKhyOaAkbIgiRnhl6yAZUGQuGKvwWI8bJRTfLtUwxE7odZqZ6pf2T1kz0SpO5Im8pZMceAzvOuikSYowHhZ_KQPWCZDe6Gh7DNjcyCl8KX0X8/s1050/fog1.png";
+const cloudDark = new Image(); cloudDark.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiQHNX_adVBXPyEFRYdyNinG6T-oeK3T6WedpnMfUY2OlebiqZXu2m5KXgVZkeSBY-6d-l3yoQGwP-Le-JwuLaotUMWSwjnH5OJfkh-uUn9e8FABpLoSvX-dG_lnWMHQo9jC1JkK8KKlKsT1sg1NbnI09qXE-8w_r6WzFn_1s3oNowJV2mx-tB50-0hPZqt/s1920/dark-blue-cloud.webp";
+const cloud1 = new Image(); cloud1.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhSCTulf2n8RoNI_sR2HOQucKhLGHyYhr1gnJAFHdqvk7sS2UUBmkNXjOZMKB1osQ7f3ke-HFbYTxl4QRLg5r55-1bM3sQEm7h3OoM-0tECC1SumvQgLwSFXfI6ymG7OlELwqgi9RgxeJvNcpMkhY10rdSji84gMuyavPjQB53zbTizBJMT1fvirxfHYIkH/s497/cloud1.png";
+const cloudNoBg = new Image(); cloudNoBg.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEkSYrvW6IOjWGjYWee7sUflMSnh8v-orr3Dj9IFUhPn8RB5Do0c7pVc-7-1Sre1lqLIBLTg95eGKGhPCzNTtVYTp2WngwYxjfb3O323eVZBWiqrCfiJc3kE3w8WST1f6BxjtR8hczkAyEpXHqYWkC0QbGOig-BBMVmPnhhwohgfJjCbORnMm7eeXo5tQq/s1257/cloud%20no%20bg.png";
+
+function setWeather(mode) {
+    current = mode;
+    backParticles = [];
+    frontParticles = [];
+    lightning = [];
+    fogParticles = [];
+    tornado = null;
+    windStrength = 0;
+    snowHeight = 0;
+    snowTimer = 0;
+    meltMode = false;
+    if (earthquakeInterval) clearInterval(earthquakeInterval);
+    earthquakeInterval = null;
+    resetObjects();
+
+    if (mode.includes('wind')) windStrength = (Math.random() < 0.5 ? -1 : 1) * (15 + Math.random() * 15);
+
+    let count = mode === 'clouds_minimal_rain' ? 200 : 600;
+    if (mode.includes('rain') || mode === 'clouds_minimal_rain') {
+        for (let i = 0; i < count; i++) {
+            const p = createRainDrop(true);
+            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+        }
+    }
+
+    if (mode.includes('snow')) {
+        for (let i = 0; i < 500; i++) {
+            const p = createSnowflake(true);
+            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+        }
+    }
+
+    if (mode.includes('hail')) {
+        for (let i = 0; i < 150; i++) {
+            const p = createHail(true);
+            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+        }
+    }
+
+    if (mode.includes('fog') || mode.includes('clouds')) {
+        const isFog = mode.includes('fog');
+        const images = isFog ? [fog3, fog2, fog1] : [cloudDark, cloud1, cloudNoBg];
+        const baseY = isFog ? canvasBack.height * 0.7 : 0;
+        const direction = windStrength ? Math.sign(windStrength) : (Math.random() < 0.5 ? 1 : -1);
+        for (let layer = 0; layer < images.length; layer++) {
+            const img = images[layer];
+            const depth = layer / (images.length - 1);
+            const scale = isFog ? 0.6 + depth * 0.4 : 0.3 + depth * 0.2;
+            const vx = (isFog ? 0.5 : 1) * (0.5 + depth) * direction;
+            const opacity = isFog ? 0.3 + depth * 0.1 : 0.5;
+            const y = baseY + (Math.random() - 0.5) * 100;
+            const imgW = img.width * scale;
+            const num = Math.ceil(canvasBack.width / imgW) + 2;
+            for (let i = 0; i < num; i++) {
+                let x = i * (canvasBack.width / (num - 2)) - imgW / 2;
+                fogParticles.push({img, x, y, scale, vx, opacity});
+            }
+        }
+    }
+
+    if (mode.includes('tornado')) {
+        tornado = { x: canvasBack.width + 200, y: innerHeight - 10, vx: mode.includes('wind') ? -5 : -3, wBot: 60, wTop: 250, h: canvasBack.height * 0.7 };
+    }
+
+    if (mode.includes('lightning')) setTimeout(triggerLightning, Math.random() * 2000 + 1000);
+    if (mode === 'earthquake') earthquakeInterval = setInterval(triggerEarthquakeShake, Math.random() * 3000 + 1500);
+
+    document.querySelectorAll('#buttons button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+}
+
+function createRainDrop(initial = false) {
+    return {
+        x: Math.random() * canvasBack.width,
+        y: initial ? Math.random() * canvasBack.height - canvasBack.height : -30,
+        length: 15 + Math.random() * 25,
+        speed: 12 + Math.random() * 8,
+        type: 'rain',
+        hit: false
+    };
+}
+
+function createSnowflake(initial = false) {
+    return {
+        x: Math.random() * canvasBack.width,
+        y: initial ? Math.random() * canvasBack.height - canvasBack.height : -10,
+        size: 1 + Math.random() * 4,
+        speed: 0.5 + Math.random() * 2.5,
+        wobble: Math.random() * 0.06,
+        wobblePhase: Math.random() * Math.PI * 2,
+        type: 'snow',
+        hit: false
+    };
+}
+
+function createHail(initial = false) {
+    const size = 2 + Math.random() * 8;
+    return {
+        x: Math.random() * canvasBack.width,
+        y: initial ? Math.random() * canvasBack.height - canvasBack.height : -20,
+        size,
+        vy: 2 + Math.random() * 3,
+        gravity: 0.5 + Math.random() * 0.3,
+        type: 'hail',
+        hit: false
+    };
+}
+
+function createSplash(x, y, count = 5, intensity = 1, type = 'rain') {
+    const color = type === 'rain' ? [150,180,255] : [255,255,255];
+    const target = y < innerHeight * 0.6 ? frontParticles : backParticles;
+    for (let i = 0; i < count; i++) {
+        target.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 8 * intensity,
+            vy: -(4 + Math.random() * 6) * intensity,
+            size: 1,
+            life: 0.4 + Math.random() * 0.3,
+            type: 'splash',
+            color
+        });
+    }
+}
+
+function triggerLightning() {
+    if (!current.includes('lightning')) return;
+    const startX = Math.random() * canvasBack.width;
+    const bolt = [{x: startX, y: 0}];
+    let x = startX, y = 0;
+    while (y < canvasBack.height * 0.8) {
+        x += (Math.random() - 0.5) * 80;
+        y += 40 + Math.random() * 50;
+        bolt.push({x, y});
+    }
+    lightning.push({points: bolt, alpha: 1});
+    lightningFlash = 1;
+    setTimeout(triggerLightning, Math.random() * 6000 + 3000);
+}
+
+function triggerEarthquakeShake() {
+    const objs = document.querySelectorAll('.obj');
+    const intensity = 8 + Math.random() * 12;
+    const duration = 800 + Math.random() * 600;
+
+    objs.forEach(obj => {
+        obj.style.transition = 'transform 0.08s';
+        let startTime = Date.now();
+        const shake = () => {
+            if (Date.now() - startTime > duration) {
+                resetObject(obj);
+                return;
+            }
+            const dx = (Math.random() - 0.5) * intensity;
+            const dy = (Math.random() - 0.5) * intensity * 0.6;
+            const rot = (Math.random() - 0.5) * 8;
+            const baseScale = obj.classList.contains('d1') ? 0.9 : obj.classList.contains('d3') ? 1.1 : 1;
+            obj.style.transform = `translateX(-50%) scale(${baseScale}) translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
+            requestAnimationFrame(shake);
+        };
+        shake();
+    });
+
+    // Random chance one object falls
+    if (Math.random() < 0.12) {
+        const randomObj = objs[Math.floor(Math.random() * objs.length)];
+        randomObj.style.transition = 'transform 2.5s ease-in, opacity 2.5s';
+        randomObj.style.transform += ' translateY(120vh) rotate(180deg)';
+        randomObj.style.opacity = 0;
+        setTimeout(() => resetObjects(), 3000);
+    }
+}
+
+function resetObjects() {
+    document.querySelectorAll('.obj').forEach(resetObject);
+}
+
+function resetObject(obj) {
+    obj.style.transition = 'transform 0.3s ease-out';
+    const scale = obj.classList.contains('d1') ? 0.9 : obj.classList.contains('d3') ? 1.1 : 1;
+    obj.style.transform = `translateX(-50%) scale(${scale})`;
+    obj.style.opacity = 1;
+}
+
+function updateObjectSway() {
+    if (windStrength === 0) return;
+    document.querySelectorAll('.obj.tree').forEach((obj, i) => {
+        const sway = windStrength * Math.sin(Date.now() / 500 + i * 0.5) * 0.5;
+        const scale = obj.classList.contains('d1') ? 0.9 : obj.classList.contains('d3') ? 1.1 : 1;
+        obj.style.transform = `translateX(-50%) scale(${scale}) translateX(${sway}px) rotate(${sway * 0.15}deg)`;
+    });
+}
+
+function drawBackground(isDay, sunX, sunY) {
+    const skyGrad = ctxBack.createLinearGradient(0, 0, 0, canvasBack.height);
+    if (current === 'clear' || current.startsWith('sunny')) {
+        skyGrad.addColorStop(0, isDay ? '#87CEEB' : '#001122');
+        skyGrad.addColorStop(1, isDay ? '#E0F7FF' : '#112233');
+    } else if (current.includes('clouds') || current.includes('fog')) {
+        skyGrad.addColorStop(0, isDay ? '#888899' : '#222233');
+        skyGrad.addColorStop(1, isDay ? '#AABBBB' : '#333344');
+    } else {
+        skyGrad.addColorStop(0, isDay ? '#444455' : '#111122');
+        skyGrad.addColorStop(1, isDay ? '#666677' : '#222233');
+    }
+    ctxBack.fillStyle = skyGrad;
+    ctxBack.fillRect(0, 0, canvasBack.width, canvasBack.height);
+
+    if ((current === 'sunny' || current === 'sunny_wind') && isDay) {
+        const grad = ctxBack.createRadialGradient(sunX, sunY, 0, sunX, sunY, 250);
+        grad.addColorStop(0, '#FFFF88');
+        grad.addColorStop(0.2, '#FFAA33');
+        grad.addColorStop(1, 'transparent');
+        ctxBack.fillStyle = grad;
+        ctxBack.fillRect(0, 0, canvasBack.width, canvasBack.height);
+    }
+
+    if (isDay) {
+        ctxBack.globalCompositeOperation = 'screen';
+        const light = ctxBack.createRadialGradient(sunX, sunY, 0, sunX, sunY, canvasBack.width / 2);
+        light.addColorStop(0, 'rgba(255,255,200,0.3)');
+        light.addColorStop(1, 'transparent');
+        ctxBack.fillStyle = light;
+        ctxBack.fillRect(0, 0, canvasBack.width, canvasBack.height);
+        ctxBack.globalCompositeOperation = 'source-over';
+    }
+}
+
+function updateAndDrawMist() {
+    fogParticles.forEach(f => {
+        f.x += f.vx;
+        const w = f.img.width * f.scale;
+        if (f.vx > 0 && f.x > canvasBack.width) f.x -= canvasBack.width + w;
+        if (f.vx < 0 && f.x + w < 0) f.x += canvasBack.width + w;
+    });
+    fogParticles.forEach(f => {
+        ctxBack.globalAlpha = f.opacity;
+        ctxBack.drawImage(f.img, f.x, f.y, f.img.width * f.scale, f.img.height * f.scale);
+    });
+    ctxBack.globalAlpha = 1;
+}
+
+function drawParticles(particles, ctx) {
+    const isDay = hour >= SUNRISE_HOUR && hour <= SUNSET_HOUR;
+    const opacityFactor = isDay ? 1 : 0.6;
+
+    particles.forEach(p => {
+        if (p.type === 'rain') {
+            ctx.strokeStyle = `rgba(150,180,255,${0.7 * opacityFactor})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + windStrength * 0.6, p.y + p.length);
+            ctx.stroke();
+        } else if (p.type === 'snow') {
+            ctx.fillStyle = `rgba(255,255,255,${0.85 * opacityFactor})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'hail') {
+            ctx.fillStyle = `rgba(255,255,255,${0.92 * opacityFactor})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (p.type === 'splash') {
+            let alpha = 0.5 * p.life;
+            if (p.color[0] === 150) alpha *= 0.7 + Math.random() * 0.6;
+            ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${alpha})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+}
+
+function updateParticles(particles) {
+    const objects = Array.from(document.querySelectorAll('.obj')).map(o => o.getBoundingClientRect());
+    const groundY = innerHeight - 10;
+
+    return particles.filter(p => {
+        let keep = true;
+
+        if (p.type === 'rain') {
+            p.x += windStrength * 0.4;
+            p.y += p.speed;
+        } else if (p.type === 'snow') {
+            p.wobblePhase += 0.015;
+            p.x += windStrength * 0.1 + Math.sin(p.wobblePhase) * p.wobble;
+            p.y += p.speed;
+        } else if (p.type === 'hail') {
+            p.vy += p.gravity;
+            p.y += p.vy;
+            p.x += windStrength * 0.25;
+        } else if (p.type === 'splash') {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.8;
+            p.life -= 1/60;
+            keep = p.life > 0;
+        }
+
+        if (p.x < 0) p.x += canvasBack.width;
+        if (p.x > canvasBack.width) p.x -= canvasBack.width;
+
+        if (p.type !== 'splash' && !p.hit) {
+            let collidedWithObject = false;
+            for (const rect of objects) {
+                const hitY = p.type === 'rain' ? p.length : p.size * 2;
+                if (p.y + hitY > rect.top && p.y < rect.bottom && p.x > rect.left && p.x < rect.right) {
+                    collidedWithObject = true;
+                    const hitYPos = rect.top;
+                    createSplash(p.x, hitYPos, p.type === 'hail' ? 5 : 5, 1, p.type);
+                    keep = false; // Rain/snow/hail disappear on object hit (no layering on objects)
+                    break;
+                }
+            }
+
+            if (!collidedWithObject && p.y > groundY) {
+                p.hit = true;
+                createSplash(p.x, groundY, p.type === 'hail' ? 6 : 5, p.type === 'hail' ? 1.2 : 1, p.type);
+                if (p.type === 'snow') {
+                    snowHeight += 0.003 * p.size;
+                }
+                keep = false;
+            }
+        }
+
+        if (p.y > canvasBack.height + 50 && p.type !== 'splash') keep = false;
+        return keep;
+    });
+}
+
+function animate() {
+    ctxBack.clearRect(0, 0, canvasBack.width, canvasBack.height);
+    ctxFront.clearRect(0, 0, canvasFront.width, canvasFront.height);
+
+    const now = new Date();
+    hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+    const isDay = hour >= SUNRISE_HOUR && hour <= SUNSET_HOUR;
+
+    const normalized = Math.min(1, Math.max(0, (hour - SUNRISE_HOUR) / (SUNSET_HOUR - SUNRISE_HOUR)));
+    const sunX = normalized * canvasBack.width;
+    const sunY = canvasBack.height * (1 - Math.sin(Math.PI * normalized)) * 0.4 + 50;
+
+    drawBackground(isDay, sunX, sunY);
+    if (current.includes('clouds') || current.includes('fog')) updateAndDrawMist();
+
+    if (isDay) {
+        const length = 50 * (1 - Math.sin(Math.PI * normalized));
+        const dir = sunX < canvasBack.width / 2 ? 1 : -1;
+        const offsetX = dir * length;
+        const blur = 5 + length / 10;
+        document.querySelectorAll('.obj').forEach(obj => {
+            obj.style.filter = `drop-shadow(${offsetX}px 8px ${blur}px rgba(0,0,0,0.5))`;
+        });
+    } else {
+        document.querySelectorAll('.obj').forEach(obj => obj.style.filter = 'none');
+    }
+
+    if (current.includes('rain') || current === 'clouds_minimal_rain') {
+        for (let i = 0; i < 2; i++) {
+            const p = createRainDrop();
+            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+        }
+    }
+    if (current.includes('snow')) {
+        for (let i = 0; i < 2; i++) {
+            const p = createSnowflake();
+            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+        }
+    }
+    if (current.includes('hail')) {
+        for (let i = 0; i < 1; i++) {
+            const p = createHail();
+            (Math.random() < 0.65 ? backParticles : frontParticles).push(p);
+        }
+    }
+
+    backParticles = updateParticles(backParticles);
+    frontParticles = updateParticles(frontParticles);
+
+    drawParticles(backParticles, ctxBack);
+    drawParticles(frontParticles, ctxFront);
+
+    if (current.includes('snow')) {
+        snowTimer += 1/60;
+        if (snowTimer >= 60) { meltMode = !meltMode; snowTimer = 0; }
+        if (meltMode) snowHeight = Math.max(0, snowHeight - 0.08);
+        snowHeight = Math.min(12, snowHeight);
+        ctxBack.fillStyle = '#ffffff';
+        ctxBack.fillRect(0, innerHeight - 10 - snowHeight, canvasBack.width, snowHeight);
+    }
+
+    lightning.forEach((l, i) => {
+        ctxBack.strokeStyle = `rgba(255,255,255,${l.alpha})`;
+        ctxBack.lineWidth = 3 + Math.random() * 2;
+        ctxBack.shadowBlur = 25;
+        ctxBack.shadowColor = 'white';
+        ctxBack.beginPath();
+        ctxBack.moveTo(l.points[0].x, l.points[0].y);
+        l.points.forEach(pt => ctxBack.lineTo(pt.x, pt.y));
+        ctxBack.stroke();
+        l.alpha -= 0.04;
+        if (l.alpha <= 0) lightning.splice(i, 1);
+    });
+    ctxBack.shadowBlur = 0;
+
+    lightningFlash = Math.max(0, lightningFlash - 0.05);
+    if (lightningFlash > 0) {
+        ctxBack.fillStyle = `rgba(255,255,255,${lightningFlash * 0.6})`;
+        ctxBack.fillRect(0, 0, canvasBack.width, canvasBack.height);
+    }
+
+    if (tornado) {
+        tornado.x += tornado.vx + windStrength * 0.15;
+        if (tornado.x < -300) tornado.x = canvasBack.width + 200;
+        ctxBack.beginPath();
+        ctxBack.moveTo(tornado.x - tornado.wBot / 2, tornado.y);
+        ctxBack.bezierCurveTo(tornado.x - tornado.wBot * 1.2, tornado.y - tornado.h / 3, tornado.x - tornado.wTop / 2, tornado.y - tornado.h, tornado.x, tornado.y - tornado.h);
+        ctxBack.bezierCurveTo(tornado.x + tornado.wTop / 2, tornado.y - tornado.h, tornado.x + tornado.wBot * 1.2, tornado.y - tornado.h / 3, tornado.x + tornado.wBot / 2, tornado.y);
+        ctxBack.closePath();
+        const grad = ctxBack.createLinearGradient(tornado.x, tornado.y - tornado.h, tornado.x, tornado.y);
+        grad.addColorStop(0, 'rgba(100,100,100,0)');
+        grad.addColorStop(0.5, isDay ? 'rgba(80,80,80,0.7)' : 'rgba(30,30,30,0.7)');
+        grad.addColorStop(1, isDay ? 'rgba(50,50,50,0.4)' : 'rgba(20,20,20,0.4)');
+        ctxBack.fillStyle = grad;
+        ctxBack.fill();
+    }
+
+    updateObjectSway();
+    requestAnimationFrame(animate);
+}
+
+const modes = [
+    {id: 'clear', label: 'Clear (Day/Night)'},
+    {id: 'sunny', label: 'Sunny'},
+    {id: 'sunny_wind', label: 'Sunny + Wind'},
+    {id: 'rain', label: 'Rain Only'},
+    {id: 'rain_wind', label: 'Rain + Wind'},
+    {id: 'rain_lightning', label: 'Rain + Lightning'},
+    {id: 'snow', label: 'Snow Only'},
+    {id: 'snow_wind', label: 'Snow + Wind'},
+    {id: 'hail', label: 'Hail Only'},
+    {id: 'hail_wind', label: 'Hail + Wind'},
+    {id: 'tornado', label: 'Tornado Only'},
+    {id: 'tornado_wind', label: 'Tornado + Wind'},
+    {id: 'fog', label: 'Fog Only'},
+    {id: 'fog_wind', label: 'Fog + Wind'},
+    {id: 'clouds', label: 'Clouds Only'},
+    {id: 'clouds_minimal_rain', label: 'Clouds + Minimal Rain'},
+    {id: 'pure_lightning', label: 'Pure Lightning'},
+    {id: 'earthquake', label: 'Earthquake'}
+];
+
+modes.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = m.label;
+    btn.dataset.mode = m.id;
+    btn.addEventListener('click', () => setWeather(m.id));
+    buttonsEl.appendChild(btn);
+});
+
+setWeather('clear');
+animate();
+</script>
+</body>
+</html>
